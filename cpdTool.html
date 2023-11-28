@@ -1,119 +1,170 @@
 <!DOCTYPE html>
 
-<html
- 
-lang="en">
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Distance Calculator</title>
+    <link rel="stylesheet" href="css/bootstrap.css" />
+    <link rel="stylesheet" href="css/cpdTool.css" />
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC8I5iXTGft7wmbxK_jjBCIwazck-YoV0w&libraries=places"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  </head>
 
-<head>
+  <body>
+    <div class="container">
+      <h2 style="text-align: center;">距離計算</h2>
 
-  
-<meta
- 
-charset="UTF-8">
+      <label for="origin" class="label">地址A:</label>
+      <input
+        type="text"
+        id="origin"
+        class="input"
+        placeholder="請輸入完整地址"
+      />
 
-  
-<meta
- 
-name="viewport"
- 
-content="width=device-width, initial-scale=1.0">
+      <label for="destination" class="label">地址B:</label>
+      <input
+        type="text"
+        id="destination"
+        class="input"
+        placeholder="請輸入完整地址"
+      />
 
-  
-<title>Distance Calculator</title>
+      <button class="button" id="calculateButton">計算</button>
 
+      <p id="result" class="result"></p>
+    </div>
 
-  
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC8I5iXTGft7wmbxK_jjBCIwazck-YoV0w&libraries=places"></script>
+    <div class="container">
+      <h2 style="text-align: center;">距離批次計算</h2>
+      <input
+        class="upload-excel"
+        type="file"
+        id="fileUpload"
+        onchange="Upload()"
+      />
+      <table id="formResult" class="table table-hover"></table>
+    </div>
 
-  <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 0;
-    }
+    <script>
+      // Initialize the Google Maps Distance Matrix service
+      const distanceMatrixService = new google.maps.DistanceMatrixService();
+      // Handle the 'Calculate Distance' button click
+      const calculateButton = document.getElementById("calculateButton");
+      calculateButton.addEventListener("click", calculateDistance);
 
-    .container {
-      display: flex;
-      flex-direction: column;
-      width: 500px;
-      margin: 0 auto;
-      padding: 20px;
-      border: 1px solid #ccc;
-    }
+      function calculateDistance() {
+        const origin = document.getElementById("origin").value;
+        const destination = document.getElementById("destination").value;
 
-    .label {
-      margin-bottom: 5px;
-      display: block;
-    }
+        // Create the distance matrix request
+        const request = {
+          origins: [origin],
+          destinations: [destination],
+          travelMode: google.maps.TravelMode.DRIVING,
+        };
 
-    .input {
-      width: 100%;
-      padding: 5px;
-      border: 1px solid #ccc;
-    }
+        // Send the distance matrix request
+        distanceMatrixService.getDistanceMatrix(request, (response, status) => {
+          if (status === google.maps.DistanceMatrixStatus.OK) {
+            // Get the distance from the response
+            const distance = response.rows[0].elements[0].distance.text;
 
-    .button {
-      padding: 10px 20px;
-      background-color: #007bff;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-    }
+            // Display the distance
+            const resultElement = document.getElementById("result");
+            resultElement.textContent = `The distance between ${origin} and ${destination} is approximately ${distance}.`;
+          } else {
+            console.error("Error calculating distance:", status);
+          }
+        });
+      }
 
-    .result {
-      margin-top: 20px;
-      font-weight: bold;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h2>Distance Calculator</h2>
+      function calculateDistanceForExcel(addA, addB, callback) {
+        const origin = addA;
+        const destination = addB;
 
-    <label for="origin" class="label">Origin:</label>
-    <input type="text" id="origin" class="input" placeholder="Enter origin address or location">
+        // Create the distance matrix request
+        const request = {
+          origins: [origin],
+          destinations: [destination],
+          travelMode: google.maps.TravelMode.DRIVING,
+        };
 
-    <label for="destination" class="label">Destination:</label>
-    <input type="text" id="destination" class="input" placeholder="Enter destination address or location">
+        // Send the distance matrix request
+        distanceMatrixService.getDistanceMatrix(request, (response, status) => {
+          if (status === google.maps.DistanceMatrixStatus.OK) {
+            // Get the distance from the response
+            console.log(response.rows[0].elements[0].distance.text);
+            let finalDistance = response.rows[0].elements[0].distance.text;
+            callback(finalDistance);
+          } else {
+            console.error("Error calculating distance:", status);
+          }
+        });
+      }
 
-    <button class="button" id="calculateButton">Calculate Distance</button>
-
-    <p id="result" class="result"></p>
-  </div>
-
-  <script>
-    // Initialize the Google Maps Distance Matrix service
-    const distanceMatrixService = new google.maps.DistanceMatrixService();
-
-    // Handle the 'Calculate Distance' button click
-    const calculateButton = document.getElementById('calculateButton');
-    calculateButton.addEventListener('click', calculateDistance);
-
-    function calculateDistance() {
-      const origin = document.getElementById('origin').value;
-      const destination = document.getElementById('destination').value;
-
-      // Create the distance matrix request
-      const request = {
-        origins: [origin],
-        destinations: [destination],
-        travelMode: google.maps.TravelMode.DRIVING,
-      };
-
-      // Send the distance matrix request
-      distanceMatrixService.getDistanceMatrix(request, (response, status) => {
-        if (status === google.maps.DistanceMatrixStatus.OK) {
-          // Get the distance from the response
-          const distance = response.rows[0].elements[0].distance.text;
-
-          // Display the distance
-          const resultElement = document.getElementById('result');
-          resultElement.textContent = `The distance between ${origin} and ${destination} is approximately ${distance}.`;
+      function Upload() {
+        const fileUpload = document.getElementById("fileUpload");
+        const regex = /^([a-zA-Z0-9\s_\\.\-:])+(.xls|.xlsx)$/;
+        if (regex.test(fileUpload.value.toLowerCase())) {
+          let fileName = fileUpload.files[0].name;
+          if (typeof FileReader !== "undefined") {
+            const reader = new FileReader();
+            if (reader.readAsBinaryString) {
+              reader.onload = (e) => {
+                processExcel(reader.result);
+              };
+              reader.readAsBinaryString(fileUpload.files[0]);
+            }
+          } else {
+            console.log("This browser does not support HTML5.");
+          }
         } else {
-          console.error('Error calculating distance:', status);
+          console.log("Please upload a valid Excel file.");
         }
-      });
-    }
-  </script>
-</body>
+      }
+
+      function processExcel(data) {
+        const workbook = XLSX.read(data, { type: "binary" });
+        const firstSheet = workbook.SheetNames[0];
+        const excelRows = XLSX.utils.sheet_to_row_object_array(
+          workbook.Sheets[firstSheet]
+        );
+        const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], {
+          header: 1,
+        });
+        const sheet_name_list = workbook.SheetNames;
+        console.log(jsonData);
+        console.log(
+          "==============================111111=================================="
+        );
+        excelRows.forEach(function (y) {
+          /* iterate through sheets */ console.log(y);
+        });
+        console.log(
+          "==============================222222=================================="
+        );
+        // 顯示 A 列和 B 列的值
+        const table = document.getElementById("formResult");
+        table.innerHTML = "";
+        for (let i = 1; i < jsonData.length; i++) {
+          const addressA = jsonData[i][0];
+          const addressB = jsonData[i][1];
+          calculateDistanceForExcel(addressA, addressB, function (distance) {
+            console.log("A:" + addressA + "B:" + addressB);
+
+            const row = table.insertRow(-1);
+            const cell1 = row.insertCell(0);
+            const cell2 = row.insertCell(1);
+            const cell3 = row.insertCell(2);
+            cell1.innerHTML = "地址A:" + addressA;
+            cell2.innerHTML = "地址B:" + addressB + "相差距離為:" + distance;
+            cell3.innerHTML = "相差距離為:" + distance;
+          });
+        }
+      }
+    </script>
+  </body>
 </html>
