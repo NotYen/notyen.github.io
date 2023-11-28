@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+  <title>Excel 匯入</title>
+</head>
+<body>
+  <input type="file" id="excel" accept=".xls,.xlsx">
+  <button onclick="importExcel()">import</button>
+
+  <table id="data"></table>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script>
+    function importExcel() {
+      // 取得上傳的 Excel 檔案
+      const excel = document.getElementById("excel").files[0];
+
+      // 讀取 Excel 檔案
+      const workbook = XLSX.readFile(excel);
+
+      // 取得 A 列和 B 列的值
+      const data = [];
+      for (let row = 1; row <= workbook.Sheets[0].MaxRow; row++) {
+        data.push([workbook.Sheets[0].Cells[row][0].Value, workbook.Sheets[0].Cells[row][1].Value]);
+      }
+
+      // 顯示 A 列和 B 列的值
+      const table = document.getElementById("data");
+      table.innerHTML = "";
+      for (let i = 0; i < data.length; i++) {
+        const row = table.insertRow(-1);
+        const cell1 = row.insertCell(0);
+        const cell2 = row.insertCell(1);
+        cell1.innerHTML = data[i][0];
+        cell2.innerHTML = data[i][1];
+      }
+    }
+  </script>
+</body>
+</html>
