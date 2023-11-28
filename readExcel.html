@@ -1,27 +1,34 @@
 <!DOCTYPE html>
 <html lang="zh-tw">
 <head>
+  <meta charset="UTF-8">
   <title>Excel 匯入</title>
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.0/xlsx.full.min.js"></script> -->
 </head>
 <body>
-  <input type="file" id="excel" accept=".xls,.xlsx">
-  <button onclick="importExcel()">import</button>
+  <input class="upload-excel" type="file" id="fileUpload" onchange="Upload()"/>
+  <!-- <input type="file" id="excel" accept=".xls,.xlsx">
+  <button onclick="Upload()">Upload</button> -->
 
   <table id="data"></table>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+ 
   <script>
-    function importExcel() {
+    function processExcel(data) {
       // 取得上傳的 Excel 檔案
-      const excel = document.getElementById("excel").files[0];
+      // const excel = document.getElementById("excel").files[0];
 
+      // const filePath = "file:///Users/senaoyen/Desktop/et/excel.xlsx"
       // 讀取 Excel 檔案
-      const workbook = XLSX.readFile(excel);
+      //const workbook = XLSX.readFile(filePath);
+      const workbook = XLSX.read(data, {type: 'binary'});
+      const sheet_name_list = workbook.SheetNames;
 
       // 取得 A 列和 B 列的值
-      const data = [];
-      for (let row = 1; row <= workbook.Sheets[0].MaxRow; row++) {
+      // const data = [];
+      for (let row = 1; row <= sheet_name_list.length; row++) {
         data.push([workbook.Sheets[0].Cells[row][0].Value, workbook.Sheets[0].Cells[row][1].Value]);
       }
 
@@ -35,6 +42,47 @@
         cell1.innerHTML = data[i][0];
         cell2.innerHTML = data[i][1];
       }
+    }
+
+    function Upload() {
+      const fileUpload = (document.getElementById('fileUpload'));
+      const regex = /^([a-zA-Z0-9\s_\\.\-:])+(.xls|.xlsx)$/;
+      if (regex.test(fileUpload.value.toLowerCase())) {
+        let fileName = fileUpload.files[0].name;
+        if (typeof (FileReader) !== 'undefined') {
+            const reader = new FileReader();
+            if (reader.readAsBinaryString) {
+                reader.onload = (e) => {
+                    // processExcel(reader.result);
+                    processExcel2(reader.result);
+                };
+                reader.readAsBinaryString(fileUpload.files[0]);
+            }
+        } else {
+            console.log("This browser does not support HTML5.");
+        }
+      } else {
+          console.log("Please upload a valid Excel file.");
+      }
+    }
+
+    function processExcel2(data) {
+        const workbook = XLSX.read(data, {type: 'binary'});
+        const firstSheet = workbook.SheetNames[0];
+        const excelRows = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[firstSheet]);
+        const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1 });
+        const sheet_name_list = workbook.SheetNames;
+        console.log(jsonData);
+        console.log("==============================111111==================================");
+        excelRows.forEach(function (y) { /* iterate through sheets */
+            console.log(y);
+        });
+        console.log("==============================222222==================================");
+        for (let i = 1; i < jsonData.length; i++) {
+          const addressA = jsonData[i][0]
+          const addressB = jsonData[i][1]
+          console.log("A:"+addressA+"B:"+addressB);
+        }
     }
   </script>
 </body>
