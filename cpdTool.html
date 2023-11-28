@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+
+<html
+ 
+lang="en">
+
+<head>
+
+  
+<meta
+ 
+charset="UTF-8">
+
+  
+<meta
+ 
+name="viewport"
+ 
+content="width=device-width, initial-scale=1.0">
+
+  
+<title>Distance Calculator</title>
+
+
+  
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC8I5iXTGft7wmbxK_jjBCIwazck-YoV0w&libraries=places"></script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+    }
+
+    .label {
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    .input {
+      width: 100%;
+      padding: 5px;
+      border: 1px solid #ccc;
+    }
+
+    .button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    .result {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Distance Calculator</h2>
+
+    <label for="origin" class="label">Origin:</label>
+    <input type="text" id="origin" class="input" placeholder="Enter origin address or location">
+
+    <label for="destination" class="label">Destination:</label>
+    <input type="text" id="destination" class="input" placeholder="Enter destination address or location">
+
+    <button class="button" id="calculateButton">Calculate Distance</button>
+
+    <p id="result" class="result"></p>
+  </div>
+
+  <script>
+    // Initialize the Google Maps Distance Matrix service
+    const distanceMatrixService = new google.maps.DistanceMatrixService();
+
+    // Handle the 'Calculate Distance' button click
+    const calculateButton = document.getElementById('calculateButton');
+    calculateButton.addEventListener('click', calculateDistance);
+
+    function calculateDistance() {
+      const origin = document.getElementById('origin').value;
+      const destination = document.getElementById('destination').value;
+
+      // Create the distance matrix request
+      const request = {
+        origins: [origin],
+        destinations: [destination],
+        travelMode: google.maps.TravelMode.DRIVING,
+      };
+
+      // Send the distance matrix request
+      distanceMatrixService.getDistanceMatrix(request, (response, status) => {
+        if (status === google.maps.DistanceMatrixStatus.OK) {
+          // Get the distance from the response
+          const distance = response.rows[0].elements[0].distance.text;
+
+          // Display the distance
+          const resultElement = document.getElementById('result');
+          resultElement.textContent = `The distance between ${origin} and ${destination} is approximately ${distance}.`;
+        } else {
+          console.error('Error calculating distance:', status);
+        }
+      });
+    }
+  </script>
+</body>
+</html>
