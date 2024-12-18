@@ -1,0 +1,198 @@
+<!DOCTYPE html>  
+<html lang="zh-Hant">  
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <title>讀取 Excel 並顯示為表格，計算分數</title>  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>  
+    <style>  
+        table {  
+            border-collapse: collapse;  
+            width: 100%;  
+            margin-top: 20px;  
+        }  
+        th, td {  
+            border: 1px solid #ccc;  
+            padding: 8px;  
+            text-align: left;  
+        }  
+        th {  
+            background-color: #f2f2f2;  
+        }  
+        /* 滑鼠移過的效果 */  
+        tr:hover {  
+                background-color: #d6e0f0; /* 鼠標移過時的背景顏色 */  
+        }
+    </style>
+</head>  
+<body>  
+
+<input type="file" id="upload" accept=".xlsx, .xls" />  
+<div id="table-container"></div>  
+
+<script>  
+    document.getElementById('upload').addEventListener('change', handleFile, false);  
+
+    function handleFile(e) {  
+        const file = e.target.files[0];  
+        const reader = new FileReader();  
+        
+        reader.onload = function(event) {  
+            const data = new Uint8Array(event.target.result);  
+            const workbook = XLSX.read(data, {type: 'array'});  
+            const firstSheetName = workbook.SheetNames[0];  
+            const worksheet = workbook.Sheets[firstSheetName];  
+            const json = XLSX.utils.sheet_to_json(worksheet);  
+            calculateScores(json);  
+        };  
+
+        reader.readAsArrayBuffer(file);  
+    }  
+
+    function calculateScores(data) {  
+        const scoredData = data.map(row => {  
+            const attendanceScore = calculateAttendanceScore(row['缺席']);  
+            const referralScore = calculateReferralScore(row['提供內部引薦']+row['提供外部引薦']);  
+            const guestScore = calculateGuestScore(row['來賓']);  
+            const oneOnOneScore = calculateOneOnOneScore(row['一對一會面']);  
+            const transactionScore = calculateTransactionScore(row['交易價值']);  
+            const educationScore = calculateEducationScore(row['分會教育單位']);  
+            
+            const totalScore = attendanceScore + referralScore + guestScore + oneOnOneScore + transactionScore + educationScore;  
+
+            return { ...row, totalScore, attendanceScore, referralScore, guestScore, oneOnOneScore, transactionScore, educationScore }; // 返回原始數據和計算的總分  
+        });  
+        displayTable(scoredData);  
+    }  
+
+    function calculateAttendanceScore(absentCount) {  
+        if (absentCount === 0) return 20;  
+        else if (absentCount === 1) return 15;  
+        else if (absentCount === 2) return 10;  
+        else return 5;  
+    }  
+
+    function calculateReferralScore(referralCount) {  
+        if (referralCount >= 26) return 20;  
+        else if (referralCount >= 21) return 15;  
+        else if (referralCount >= 17) return 10;  
+        else if (referralCount >= 13) return 5;  
+        else return 0;  
+    }  
+
+    function calculateGuestScore(guestCount) {  
+        if (guestCount >= 9) return 15;  
+        else if (guestCount >= 5) return 10;  
+        else return 0;  
+    }  
+
+    function calculateOneOnOneScore(oneOnOneCount) {  
+        if (oneOnOneCount >= 34) return 15;  
+        else if (oneOnOneCount >= 17) return 10;  
+        else if (oneOnOneCount >= 9) return 5;  
+        else return 0;  
+    }  
+
+    function calculateTransactionScore(transactionValue) {  
+        if (transactionValue >= 2000000) return 15;  
+        else if (transactionValue >= 800000) return 10;  
+        else if (transactionValue >= 400000) return 5;  
+        else return 0;  
+    }  
+
+    function calculateEducationScore(educationCount) {  
+        if (educationCount >= 6) return 15;  
+        else if (educationCount >= 4) return 10;  
+        else if (educationCount >= 2) return 5;  
+        else return 0;  
+    }  
+
+    function displayTable(scoredData) {  
+        const tableContainer = document.getElementById('table-container');  
+        tableContainer.innerHTML = ""; // 清空之前的表格  
+
+        const table = document.createElement('table');  
+        const thead = document.createElement('thead');  
+        const tbody = document.createElement('tbody');  
+
+        // 創建表頭  
+        const headers = Object.keys(scoredData[0]); // 使用第一行數據的鍵作為表頭  
+        const headerRow = document.createElement('tr');  
+
+        headers.forEach(header => {  
+            const th = document.createElement('th');
+            if(header == 'totalScore'){
+                // 設定背景顏色  
+                th.style.backgroundColor = '#FF0000'; // 設定為紅色 
+                th.style.color = '#FFFFFF'; // 設定為紅色 
+                th.textContent = '總分';  
+            } 
+            else if(header == 'attendanceScore'){
+                th.style.backgroundColor = '#FF0000'; // 設定為紅色 
+                th.style.color = '#FFFFFF'; // 設定為紅色 
+                th.textContent = '出席分數';  
+            }
+            else if(header == 'referralScore'){
+                th.style.backgroundColor = '#FF0000'; // 設定為紅色 
+                th.style.color = '#FFFFFF'; // 設定為紅色 
+                th.textContent = '引薦分數';  
+            }
+            else if(header == 'guestScore'){
+                th.style.backgroundColor = '#FF0000'; // 設定為紅色 
+                th.style.color = '#FFFFFF'; // 設定為紅色 
+                th.textContent = '來賓分數';  
+            }
+            else if(header == 'oneOnOneScore'){
+                th.style.backgroundColor = '#FF0000'; // 設定為紅色 
+                th.style.color = '#FFFFFF'; // 設定為紅色 
+                th.textContent = '一對一分數';  
+            }
+            else if(header == 'transactionScore'){
+                th.style.backgroundColor = '#FF0000'; // 設定為紅色 
+                th.style.color = '#FFFFFF'; // 設定為紅色 
+                th.textContent = '交易價值分數';  
+            } 
+            else if(header == 'educationScore'){
+                th.style.backgroundColor = '#FF0000'; // 設定為紅色 
+                th.style.color = '#FFFFFF'; // 設定為紅色 
+                th.textContent = '教育單位分數';  
+            } 
+            else {
+                th.textContent = header;  
+            }
+            headerRow.appendChild(th);  
+        });  
+
+        thead.appendChild(headerRow);  
+        table.appendChild(thead);  
+
+        // 創建表身  
+        scoredData.forEach(row => {  
+            const bodyRow = document.createElement('tr');  
+
+            headers.forEach(header => {  
+                if(row%2 == 0){
+                    bodyRow.style.backgroundColor = '#00FF00';
+                }
+                const td = document.createElement('td');  
+                td.textContent = row[header] || ""; // 避免顯示 undefined  
+                bodyRow.appendChild(td);  
+            });  
+
+            const scoreCell = document.createElement('td'); // 新增的總分欄位  
+            scoreCell.textContent = row.totalScore; // 添加計算的總分  
+
+            // const attendanceScoreCell = document.createElement('td'); // 新增的總分欄位  
+            // attendanceScoreCell.textContent = row.attendanceScore; // 添加計算的總分  
+            // bodyRow.appendChild(scoreCell);  
+
+            tbody.appendChild(bodyRow);  
+        });  
+
+        table.appendChild(tbody);  
+        tableContainer.appendChild(table);  
+    }  
+</script>  
+
+</body>  
+</html> 
